@@ -6,7 +6,7 @@
     
     windows 请使用 [git bash](https://gitforwindows.org/)
     
-    运行 `./project.sh` 
+    运行 `./export.sh` 
     
 2. git_archive 
     -----------
