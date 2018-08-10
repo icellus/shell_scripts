@@ -45,7 +45,7 @@ relative_url="$(svn info ${project_dir} --username ${username} --password ${pass
 # svn log -r {2018-06-08}:{2018-08-06} -q -v --search cuipw | sed -e '/cuipw |/d' -e '/Changed paths:/d' -e '/---/d' | sort -n | awk '{print $2}' | uniq
 
 # todo 存入数组或者变量
-log_array="$(svn log ${project_dir} -r {2018-06-08}:{2018-08-06} -l ${limit} -q -v --search ${username}  --username ${username} --password ${password} | sed -e "/${username} |/d" -e '/Changed paths:/d' -e '/---/d' | sort -n | awk '{print $2}' | uniq)"
+log_array="$(svn log ${project_dir} -r {${start_time}}:{${end_time}} -l ${limit} -q -v --search ${username}  --username ${username} --password ${password} | sed -e "/${username} |/d" -e '/Changed paths:/d' -e '/---/d' | sort -n | awk '{print $2}' | uniq)"
 
 update_dir="update"$(date "+%Y_%m_%d_%H_%M")
 # 当前文件夹下 创建 update 文件夹 用于存储有更新的文件
