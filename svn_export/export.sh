@@ -14,21 +14,20 @@ start_time=""   # 开始时间 default:3天前
 end_time=""     # 结束时间 default:当前时间
 limit="10"      # 检索条数 default:10
 
-if [-z "${username}" || -z "${password}"]; then
+if [[ -z "${username}" || -z "${password}" ]]; then
     echo 'please offer your username and password' >&2
     exit 1
 fi
 
-if [-z "${search_user}"]; then
+if [ -z "${search_user}" ]; then
     search_user="${username}"
 fi
-if [-z "${start_time}"]; then
-    start_time=$(date "+%Y-%m-%d %H:%M:%S")
+if [ -z "${start_time}" ]; then
+    start_time=$(date -d -30day "+%Y-%m-%d")
 fi
-if [-z "${end_time}"]; then
-    start_time=$(date -d -3day "+%Y-%m-%d %H:%M:%S")
+if [ -z "${end_time}" ]; then
+    end_time=$(date -d +1day "+%Y-%m-%d")
 fi
-
 
 # 检验svn是否存在
 if ! [ -x "$(command -v svn)" ]; then
@@ -46,6 +45,7 @@ relative_url="$(svn info ${project_dir} --username ${username} --password ${pass
 
 # todo 存入数组或者变量
 log_array="$(svn log ${project_dir} -r {${start_time}}:{${end_time}} -l ${limit} -q -v --search ${username}  --username ${username} --password ${password} | sed -e "/${username} |/d" -e '/Changed paths:/d' -e '/---/d' | sort -n | awk '{print $2}' | uniq)"
+#echo "数组的元素为: ${log_array[*]}"
 
 update_dir="update"$(date "+%Y_%m_%d_%H_%M")
 # 当前文件夹下 创建 update 文件夹 用于存储有更新的文件
@@ -53,7 +53,6 @@ if ! [[ -d ${update_dir} ]]; then
 	mkdir ${update_dir}
 fi
 
-#echo "数组的元素为: ${log_array[*]}"
 # 创建 文件夹
 for loop in ${log_array}
 do
@@ -67,6 +66,12 @@ do
     	mkdir -p ${update_dir}${file}
     fi
 done
+
+# 检验svn是否存在
+if [ -s ${update_dir} ]; then
+  echo 'The svn log search result is empty.' >&2
+  exit 1
+fi
 
 # 复制出来的文件使用的是全路径， 剪切出来。
 mkdir update_file
