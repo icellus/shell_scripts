@@ -10,9 +10,8 @@ password=""
 
 # 检索条件
 search_user=""  # 检索用户 default:当前用户
-start_time=""   # 开始时间 default:3天前
+start_time=""   # 开始时间 default:3天前  格式：  {2018-08-03}
 end_time=""     # 结束时间 default:当前时间
-limit="10"      # 检索条数 default:10
 
 if [[ -z "${username}" || -z "${password}" ]]; then
     echo 'please offer your username and password' >&2
@@ -23,10 +22,10 @@ if [ -z "${search_user}" ]; then
     search_user="${username}"
 fi
 if [ -z "${start_time}" ]; then
-    start_time=$(date -d -30day "+%Y-%m-%d")
+    start_time="{$(date -d -3day "+%Y-%m-%d")}"
 fi
 if [ -z "${end_time}" ]; then
-    end_time=$(date -d +1day "+%Y-%m-%d")
+    end_time="HEAD"
 fi
 
 # 检验svn是否存在
@@ -44,7 +43,7 @@ relative_url="$(svn info ${project_dir} --username ${username} --password ${pass
 # svn log -r {2018-06-08}:{2018-08-06} -q -v --search cuipw | sed -e '/cuipw |/d' -e '/Changed paths:/d' -e '/---/d' | sort -n | awk '{print $2}' | uniq
 
 # todo 存入数组或者变量
-log_array="$(svn log ${project_dir} -r {${start_time}}:{${end_time}} -l ${limit} -q -v --search ${username}  --username ${username} --password ${password} | sed -e "/${username} |/d" -e '/Changed paths:/d' -e '/---/d' | sort -n | awk '{print $2}' | uniq)"
+log_array="$(svn log ${project_dir} -r ${start_time}:${end_time} -q -v --search ${username} --username ${username} --password ${password} | sed -e "/${username} |/d" -e '/Changed paths:/d' -e '/---/d' | sort -n | awk '{print $2}' | uniq)"
 #echo "数组的元素为: ${log_array[*]}"
 
 update_dir="update"$(date "+%Y_%m_%d_%H_%M")
@@ -67,20 +66,20 @@ do
     fi
 done
 
-# 检验svn是否存在
-if [ -s ${update_dir} ]; then
+# 检验svn log是否存在
+if  [ "$(ls -A ${update_dir})" == "" ]; then
   echo 'The svn log search result is empty.' >&2
   exit 1
 fi
 
 # 复制出来的文件使用的是全路径， 剪切出来。
+# can't use mv ${update_dir}${project_dir}"/*" update_file/ don't ask me why
 mkdir update_file
-# windows is a little stupid ! So I use 'mv ' second times .
-mv ${update_dir}${project_dir} update_file/
+mv ${update_dir}${project_dir}/* update_file/
 
-rm -rf ${update_dir}  && mkdir ${update_dir}
+rm -rf ${update_dir}/*
 
-mv update_file/*/* ${update_dir}
+mv update_file/* ${update_dir}
 rm -rf update_file/
 
 
@@ -92,19 +91,21 @@ rm -rf update_file/
 # checkout the online version
 svn checkout -q ${online_version} online_version  --username ${username} --password ${password}
 
-# create an empty git repository
 if ! [ -x "$(command -v git)" ]; then
-  cp -rf ${update_dir}"/*" online_version
+  cp -rf ${update_dir}/* online_version
   echo 'Error: git is not installed.' >&2
   exit 1
 fi
+# create an empty git repository
 cd online_version
 git init
+# first commit  add the whole online_version
 git add .
-
 git commit -m 'init repository' -q
 
-cd ../ && cp -rf ${update_dir}"/*" online_version && cd online_version
+cd ../
+cp -rf ${update_dir}/* online_version
+cd online_version
 git add .
 
 echo "please check the diff with your local and the online version, and do the edit you need"
