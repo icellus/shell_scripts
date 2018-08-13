@@ -27,6 +27,7 @@ fi
 if [ -z "${end_time}" ]; then
     end_time="HEAD"
 fi
+echo -e "Params initialization completed. Start get svn log\n"
 
 # 检验svn是否存在
 if ! [ -x "$(command -v svn)" ]; then
@@ -38,9 +39,9 @@ working_copy_path="$(svn info ${project_dir} --username ${username} --password $
 # 关联路径
 relative_url="$(svn info ${project_dir} --username ${username} --password ${password} | sed -n '/Relative/p' | awk '{print $3}' | sed 's/^\^//')"
 
-# svn log -r {2018-06-08}:{2018-08-06} -q -v --search cuipw | sed -e '/cuipw |/d' -e '/Changed paths:/d' -e '/---/d' | awk '{print $2}'
+# svn log -r {2018-06-08}:{2018-08-06} -q -v --search ${username} | sed -e '/${username} |/d' -e '/Changed paths:/d' -e '/---/d' | awk '{print $2}'
 # 去重复
-# svn log -r {2018-06-08}:{2018-08-06} -q -v --search cuipw | sed -e '/cuipw |/d' -e '/Changed paths:/d' -e '/---/d' | sort -n | awk '{print $2}' | uniq
+# svn log -r {2018-06-08}:{2018-08-06} -q -v --search ${username} | sed -e '/${username} |/d' -e '/Changed paths:/d' -e '/---/d' | sort -n | awk '{print $2}' | uniq
 
 # todo 存入数组或者变量
 log_array="$(svn log ${project_dir} -r ${start_time}:${end_time} -q -v --search ${username} --username ${username} --password ${password} | sed -e "/${username} |/d" -e '/Changed paths:/d' -e '/---/d' | sort -n | awk '{print $2}' | uniq)"
@@ -81,7 +82,7 @@ rm -rf ${update_dir}/*
 
 mv update_file/* ${update_dir}
 rm -rf update_file/
-
+echo -e "svn log have checked successfully,start checkout online_version,please wait for a moment... \n"
 
 # todo 交互式处理剩下的逻辑
 # copy the .svn file
@@ -89,23 +90,26 @@ rm -rf update_file/
 # until now,you have get the all updated file's copy
 
 # checkout the online version
-svn checkout -q ${online_version} online_version  --username ${username} --password ${password}
+online_version_dir="online_version_"$(date "+%Y_%m_%d_%H_%M")
+svn checkout -q ${online_version} ${online_version_dir}  --username ${username} --password ${password}
 
 if ! [ -x "$(command -v git)" ]; then
-  cp -rf ${update_dir}/* online_version
+  cp -rf ${update_dir}/* ${online_version_dir}
   echo 'Error: git is not installed.' >&2
   exit 1
 fi
+
+echo -e "online_version have checked out,try to init a git repository... \e"
 # create an empty git repository
-cd online_version
+cd ${online_version_dir}
 git init
 # first commit  add the whole online_version
 git add .
 git commit -m 'init repository' -q
 
 cd ../
-cp -rf ${update_dir}/* online_version
-cd online_version
+cp -rf ${update_dir}/* ${online_version_dir}
+cd ${online_version_dir}
 git add .
 
 echo "please check the diff with your local and the online version, and do the edit you need"
