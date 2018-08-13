@@ -27,7 +27,7 @@ fi
 if [ -z "${end_time}" ]; then
     end_time="HEAD"
 fi
-echo -e "Params initialization completed. Start get svn log\n"
+echo -e "Params initialization completed. start to get svn log......\n"
 
 # 检验svn是否存在
 if ! [ -x "$(command -v svn)" ]; then
@@ -82,7 +82,7 @@ rm -rf ${update_dir}/*
 
 mv update_file/* ${update_dir}
 rm -rf update_file/
-echo -e "svn log have checked successfully,start checkout online_version,please wait for a moment... \n"
+echo -e "svn log have checked successfully,start to checkout online_version,please wait a moment...... \n"
 
 # todo 交互式处理剩下的逻辑
 # copy the .svn file
@@ -99,13 +99,15 @@ if ! [ -x "$(command -v git)" ]; then
   exit 1
 fi
 
-echo -e "online_version have checked out,try to init a git repository... \e"
+echo -e "online_version have checked out,try to init a git repository...... \n"
 # create an empty git repository
 cd ${online_version_dir}
 git init
+echo -e "\n"
 # first commit  add the whole online_version
 git add .
 git commit -m 'init repository' -q
+echo -e "\n"
 
 cd ../
 cp -rf ${update_dir}/* ${online_version_dir}
@@ -113,8 +115,6 @@ cd ${online_version_dir}
 git add .
 
 echo "please check the diff with your local and the online version, and do the edit you need"
-
-
 
 
 # I'm so sorry,my script has throw a exception
