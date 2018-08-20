@@ -49,7 +49,7 @@ log_array="$(svn log ${project_dir} -r ${start_time}:${end_time} -q -v --search 
 
 update_dir="update"$(date "+%Y_%m_%d_%H_%M")
 # 当前文件夹下 创建 update 文件夹 用于存储有更新的文件
-if ! [[ -d ${update_dir} ]]; then
+if ! [ -d ${update_dir} ]; then
 	mkdir ${update_dir}
 fi
 
@@ -103,6 +103,9 @@ fi
 echo -e "online_version have checked out,try to init a git repository...... \n"
 # create an empty git repository
 cd ${online_version_dir}
+
+echo "/.idea" >> .gitignore
+
 git init
 echo -e "\n"
 # first commit  add the whole online_version
