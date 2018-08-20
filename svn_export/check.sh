@@ -1,18 +1,37 @@
 #!/bin/bash
+#
+# svn export script
 
-# todo 检测目录或文件是否有效
+##### 配置项 开始 #####
+#
+# 必填项：
+#   project_dir     当前项目的本地路径(绝对路径)
+#   online_version  线上版本的svn地址
+#
+#   username        svn username
+#   password        svn  password
+#
+# 选填项：
+#   search_user     检索用户 default:当前用户
+#   start_time      开始时间 default:3天前  格式：  {2018-08-03}
+#   end_time        结束时间 default:当前时间
+###################################################
 project_dir="/d/project_folder/project_name"
 online_version="svn://192.168.0.2/xxx/xxx/xxx"
 
-# account
 username=""
 password=""
 
-# 检索条件
-search_user=""  # 检索用户 default:当前用户
-start_time=""   # 开始时间 default:3天前  格式：  {2018-08-03}
-end_time=""     # 结束时间 default:当前时间
+search_user=""
+start_time=""
+end_time=""
+##### 配置项 结束  #####
 
+#--------------------------------------------
+#   script start
+#
+#--------------------------------------------
+# todo 检测目录或文件是否有效
 if [[ -z "${username}" || -z "${password}" ]]; then
     echo 'please offer your username and password' >&2
     exit 1
