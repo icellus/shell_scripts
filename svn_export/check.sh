@@ -54,15 +54,15 @@ if ! [ -x "$(command -v svn)" ]; then
   exit 1
 fi
 # 项目根目录
-working_copy_path="$(svn info ${project_dir} --username ${username} --password ${password} | sed -n '/Working Copy Root Path/p' | awk '{print $5}')"
-# 关联路径
+#working_copy_path="$(svn info ${project_dir} --username ${username} --password ${password} | sed -n '/Working Copy Root Path/p' | awk '{print $5}')"
+# svn relative url
 relative_url="$(svn info ${project_dir} --username ${username} --password ${password} | sed -n '/Relative/p' | awk '{print $3}' | sed 's/^\^//')"
 
 # svn log -r {2018-06-08}:{2018-08-06} -q -v --search ${username} | sed -e '/${username} |/d' -e '/Changed paths:/d' -e '/---/d' | awk '{print $2}'
 # 去重复
 # svn log -r {2018-06-08}:{2018-08-06} -q -v --search ${username} | sed -e '/${username} |/d' -e '/Changed paths:/d' -e '/---/d' | sort -n | awk '{print $2}' | uniq
 
-# todo 存入数组或者变量
+# 将svn log 存入数组
 log_array="$(svn log ${project_dir} -r ${start_time}:${end_time} -q -v --search ${username} --username ${username} --password ${password} | sed -e "/${username} |/d" -e '/Changed paths:/d' -e '/---/d' | sort -n | awk '{print $2}' | uniq)"
 #echo "数组的元素为: ${log_array[*]}"
 
@@ -76,6 +76,7 @@ fi
 for loop in ${log_array}
 do
 	# 文件绝对路径
+	# ${loop#${relative_url}*} 截取掉relative_url 后的路径
     file=${project_dir}${loop#${relative_url}*}
 
     if [ -f ${file} ]; then
@@ -89,6 +90,7 @@ done
 # 检验svn log是否存在
 if  [ "$(ls -A ${update_dir})" == "" ]; then
   echo 'The svn log search result is empty.' >&2
+  rm -rf ${update_dir}
   exit 1
 fi
 
@@ -108,10 +110,21 @@ echo -e "svn log have checked successfully,start to checkout online_version,plea
 #cp -r ${project_dir}"/.svn" $update_dir
 # until now,you have get the all updated file's copy
 
-# checkout the online version
-# todo 只检出有变更的文件夹
+# checkout all of the online version
+#online_version_dir="online_version_"$(date "+%Y_%m_%d_%H_%M")
+#svn checkout -q ${online_version} ${online_version_dir}/  --username ${username} --password ${password}
+
+# 只检出有变更的一级文件夹
 online_version_dir="online_version_"$(date "+%Y_%m_%d_%H_%M")
-svn checkout -q ${online_version} ${online_version_dir}  --username ${username} --password ${password}
+mkdir ${online_version_dir}
+for loop in ${log_array}
+do
+    work_path=${loop#${relative_url}/*}
+    work_path=${work_path%%/*}
+    if ! [ -d ${online_version_dir}/${work_path} ]; then
+        svn checkout -q ${online_version}/${work_path} ${online_version_dir}/${work_path}  --username ${username} --password ${password}
+    fi
+done
 
 if ! [ -x "$(command -v git)" ]; then
   cp -rf ${update_dir}/* ${online_version_dir}
