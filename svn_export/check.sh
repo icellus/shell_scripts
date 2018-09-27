@@ -53,6 +53,10 @@ if ! [ -x "$(command -v svn)" ]; then
   echo 'Error: svn is not installed.' >&2
   exit 1
 fi
+
+# svn update
+svn update ${project_dir} --username ${username} --password ${password}
+
 # 项目根目录
 #working_copy_path="$(svn info ${project_dir} --username ${username} --password ${password} | sed -n '/Working Copy Root Path/p' | awk '{print $5}')"
 # svn relative url
@@ -143,7 +147,7 @@ echo -e "\n"
 # first commit  add the whole online_version
 git add .
 git commit -m 'init repository' -q
-echo -e "\n"
+echo -e "Git initialization is complete, try adding the change file. The repository directory is: ${online_version_dir}\n\n"
 
 cd ../
 cp -rf ${update_dir}/* ${online_version_dir}
